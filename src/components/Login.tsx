@@ -7,13 +7,16 @@ import { checkValidData } from "../utils/validate";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+import { USER_AVATAR } from "@/utils/constants";
 
 const Login = () => {
   const [isSignIn, setIsSignIn] = useState(true);
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [validationErrorMessage, setValidationErrorMessage] = useState<{
     email?: string;
     password?: string;
@@ -56,7 +59,26 @@ const Login = () => {
         .then((userCredential) => {
           // Signed up
           const user = userCredential.user;
-          navigate("/browse");
+          updateProfile(user, {
+            displayName: nameValue,
+            photoURL: USER_AVATAR,
+          })
+            .then(() => {
+              dispatch(
+                addUser({
+                  uid: user.uid,
+                  email: user.email,
+                  displayName: user.displayName,
+                  photoUrl: user.photoURL,
+                })
+              );
+            })
+            .catch((error) => {
+              // An error occurred
+              console.log("error:", error);
+              // ...
+            });
+
           // ...
         })
         .catch((error) => {
@@ -71,7 +93,6 @@ const Login = () => {
         .then((userCredential) => {
           // Signed in
           const user = userCredential.user;
-          navigate("/browse");
           // ...
         })
         .catch((error) => {
